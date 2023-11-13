@@ -1,0 +1,4 @@
+[Thumbnailer Entry]
+TryExec=/usr/lib/winicothumbnailer
+Exec=/usr/lib/winicothumbnailer %i %o %s
+MimeType=image/x-icon;image/x-ico;image/vnd.microsoft.icon;application/ico;image/ico;image/icon;text/ico;

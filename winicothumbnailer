@@ -1,0 +1,68 @@
+#!/usr/bin/gawk -f
+BEGIN{
+if(!ARGV[1]){help();exit}
+f_in=ARGV[1]
+f_out=ARGV[2]
+f_size=ARGV[3]
+main()
+}
+
+function help(){print "winicothumbnailer inputfile outputfile size"}
+
+function abs(v){
+if(v<0){v=-v}
+return v
+}
+
+function main(	i){
+	if(system("command -v icotool > /dev/null")!=0){print "The icoutils package is not installed!";exit -1}
+	cmd="icotool -l "f_in
+	while((cmd|getline)>0){
+		i++
+		line = $0
+		while (match(line, /--([[:alnum:]-]+)(=([^[:space:]]+))?/, arr)) {
+			name = arr[1]
+			value = arr[3]
+			findex[i][name] = value
+			line = substr(line, RSTART + RLENGTH)
+		}
+	}
+	close(cmd)
+	for(i in findex){
+		larger_dimen = (findex[i]["width"] > findex[i]["height"]) ? findex[i]["width"] : findex[i]["height"]
+		sizes[larger_dimen][findex[i]["bit-depth"]] = i
+	}
+	#arraytree(findex,"findex")
+	arraytree(sizes,"sizes")
+
+	closest = ""
+	for (i in sizes) {
+		if (closest == "" || abs(f_size - i) < abs(f_size - closest)) {
+			closest = i;
+		}
+	}
+
+	desiredValue = ""
+	hasValue8 = 0
+
+	for (i in sizes[closest]) {
+		if (i == "8") {
+			desiredValue = "8"
+			hasValue8 = 1
+		}
+	}
+
+	if (hasValue8 == 0) {
+		maxNum = -1
+		for (i in sizes[closest]) {
+			if (i+0 > maxNum) {
+				maxNum = i+0
+			}
+		}
+		desiredValue = maxNum
+	}
+
+cmd="icotool -x --index="sizes[closest][desiredValue]" -o "f_out " " f_in
+system(cmd)
+close(cmd)
+}
